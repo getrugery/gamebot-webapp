@@ -1,0 +1,1246 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>🎮 GameBot</title>
+<script src="https://telegram.org/js/telegram-web-app.js"></script>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Unbounded:wght@400;600;800&family=Inter:wght@400;500;600&display=swap');
+
+  :root {
+    --bg: #0a0a0f;
+    --surface: #13131a;
+    --surface2: #1c1c28;
+    --accent: #7c3aed;
+    --accent2: #a855f7;
+    --gold: #f59e0b;
+    --green: #10b981;
+    --red: #ef4444;
+    --blue: #3b82f6;
+    --text: #f1f5f9;
+    --muted: #64748b;
+    --border: rgba(124,58,237,0.2);
+  }
+
+  * { margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Inter', sans-serif;
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* HEADER */
+  .header {
+    background: linear-gradient(135deg, var(--accent) 0%, #1e1b4b 100%);
+    padding: 20px 16px 24px;
+    position: relative;
+    overflow: hidden;
+  }
+  .header::before {
+    content: '';
+    position: absolute;
+    top: -50%;
+    right: -20%;
+    width: 200px;
+    height: 200px;
+    background: radial-gradient(circle, rgba(168,85,247,0.3) 0%, transparent 70%);
+    border-radius: 50%;
+  }
+  .header-top {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 16px;
+  }
+  .logo {
+    font-family: 'Unbounded', sans-serif;
+    font-size: 18px;
+    font-weight: 800;
+    background: linear-gradient(90deg, #fff, var(--accent2));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
+  .balance-card {
+    background: rgba(255,255,255,0.1);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255,255,255,0.2);
+    border-radius: 16px;
+    padding: 14px 18px;
+    text-align: center;
+  }
+  .balance-label { font-size: 11px; color: rgba(255,255,255,0.7); text-transform: uppercase; letter-spacing: 1px; }
+  .balance-amount {
+    font-family: 'Unbounded', sans-serif;
+    font-size: 28px;
+    font-weight: 800;
+    color: var(--gold);
+    text-shadow: 0 0 20px rgba(245,158,11,0.5);
+  }
+  .balance-username { font-size: 12px; color: rgba(255,255,255,0.6); margin-top: 2px; }
+
+  /* NAV */
+  .nav {
+    display: flex;
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+    overflow-x: auto;
+    scrollbar-width: none;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+  }
+  .nav::-webkit-scrollbar { display: none; }
+  .nav-btn {
+    flex: 0 0 auto;
+    padding: 12px 16px;
+    background: none;
+    border: none;
+    color: var(--muted);
+    font-size: 12px;
+    font-family: 'Inter', sans-serif;
+    font-weight: 500;
+    cursor: pointer;
+    white-space: nowrap;
+    border-bottom: 2px solid transparent;
+    transition: all 0.2s;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 2px;
+  }
+  .nav-btn .icon { font-size: 18px; }
+  .nav-btn.active { color: var(--accent2); border-bottom-color: var(--accent2); }
+
+  /* PAGES */
+  .page { display: none; padding: 16px; animation: fadeIn 0.2s ease; }
+  .page.active { display: block; }
+  @keyframes fadeIn { from { opacity:0; transform: translateY(4px); } to { opacity:1; transform: translateY(0); } }
+
+  /* CARDS */
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 16px;
+    margin-bottom: 12px;
+  }
+  .card-title {
+    font-family: 'Unbounded', sans-serif;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--accent2);
+    margin-bottom: 12px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  /* BUTTONS */
+  .btn {
+    width: 100%;
+    padding: 14px;
+    border: none;
+    border-radius: 12px;
+    font-family: 'Unbounded', sans-serif;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.15s;
+    position: relative;
+    overflow: hidden;
+  }
+  .btn:active { transform: scale(0.97); }
+  .btn-primary {
+    background: linear-gradient(135deg, var(--accent), var(--accent2));
+    color: white;
+    box-shadow: 0 4px 15px rgba(124,58,237,0.4);
+  }
+  .btn-gold {
+    background: linear-gradient(135deg, #d97706, var(--gold));
+    color: #1c1917;
+    box-shadow: 0 4px 15px rgba(245,158,11,0.4);
+  }
+  .btn-green {
+    background: linear-gradient(135deg, #059669, var(--green));
+    color: white;
+    box-shadow: 0 4px 15px rgba(16,185,129,0.4);
+  }
+  .btn-red {
+    background: linear-gradient(135deg, #dc2626, var(--red));
+    color: white;
+  }
+  .btn-surface {
+    background: var(--surface2);
+    color: var(--text);
+    border: 1px solid var(--border);
+  }
+  .btn-sm {
+    padding: 10px 16px;
+    font-size: 11px;
+    width: auto;
+    display: inline-block;
+  }
+
+  /* BET INPUT */
+  .bet-row {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 12px;
+  }
+  .bet-input {
+    flex: 1;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 12px 14px;
+    color: var(--text);
+    font-family: 'Unbounded', sans-serif;
+    font-size: 16px;
+    font-weight: 600;
+    outline: none;
+  }
+  .bet-input:focus { border-color: var(--accent2); }
+  .bet-presets {
+    display: flex;
+    gap: 6px;
+    margin-bottom: 12px;
+    flex-wrap: wrap;
+  }
+  .preset-btn {
+    flex: 1;
+    min-width: 60px;
+    padding: 8px 4px;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    color: var(--muted);
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    text-align: center;
+    transition: all 0.15s;
+  }
+  .preset-btn:active { background: var(--accent); color: white; border-color: var(--accent); }
+
+  /* SLOTS */
+  .slots-display {
+    display: flex;
+    justify-content: center;
+    gap: 8px;
+    margin: 20px 0;
+  }
+  .slot-reel {
+    width: 80px;
+    height: 80px;
+    background: var(--surface2);
+    border: 2px solid var(--border);
+    border-radius: 16px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 36px;
+    transition: all 0.3s;
+    position: relative;
+    overflow: hidden;
+  }
+  .slot-reel.spinning {
+    animation: spin 0.1s linear infinite;
+    border-color: var(--accent2);
+    box-shadow: 0 0 20px rgba(168,85,247,0.3);
+  }
+  @keyframes spin {
+    0% { transform: translateY(0); }
+    50% { transform: translateY(-4px); }
+    100% { transform: translateY(0); }
+  }
+  .slot-reel.win {
+    border-color: var(--gold);
+    box-shadow: 0 0 20px rgba(245,158,11,0.5);
+    animation: winPulse 0.5s ease;
+  }
+  @keyframes winPulse {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.1); }
+    100% { transform: scale(1); }
+  }
+
+  /* RESULT MESSAGE */
+  .result-msg {
+    text-align: center;
+    padding: 12px;
+    border-radius: 12px;
+    font-weight: 600;
+    font-size: 14px;
+    margin: 10px 0;
+    display: none;
+  }
+  .result-msg.win { background: rgba(16,185,129,0.15); color: var(--green); border: 1px solid rgba(16,185,129,0.3); display: block; }
+  .result-msg.lose { background: rgba(239,68,68,0.15); color: var(--red); border: 1px solid rgba(239,68,68,0.3); display: block; }
+  .result-msg.info { background: rgba(124,58,237,0.15); color: var(--accent2); border: 1px solid var(--border); display: block; }
+
+  /* SPORT GAME */
+  .sport-field {
+    background: linear-gradient(180deg, #064e3b 0%, #065f46 50%, #064e3b 100%);
+    border-radius: 16px;
+    height: 140px;
+    position: relative;
+    overflow: hidden;
+    margin: 16px 0;
+    border: 2px solid rgba(16,185,129,0.3);
+  }
+  .sport-field::before {
+    content: '';
+    position: absolute;
+    left: 50%;
+    top: 10%;
+    bottom: 10%;
+    width: 2px;
+    background: rgba(255,255,255,0.2);
+    transform: translateX(-50%);
+  }
+  .sport-field::after {
+    content: '';
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    width: 60px;
+    height: 60px;
+    border: 2px solid rgba(255,255,255,0.2);
+    border-radius: 50%;
+    transform: translate(-50%, -50%);
+  }
+  .ball {
+    position: absolute;
+    font-size: 28px;
+    transition: all 0.8s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+    left: 20%;
+    top: 50%;
+    transform: translateY(-50%);
+  }
+  .goal-post {
+    position: absolute;
+    right: 10px;
+    top: 20%;
+    bottom: 20%;
+    width: 12px;
+    border: 3px solid rgba(255,255,255,0.6);
+    border-right: none;
+    border-radius: 2px 0 0 2px;
+  }
+
+  /* BASKETBALL */
+  .basket-court {
+    background: linear-gradient(180deg, #7c2d12 0%, #9a3412 50%, #7c2d12 100%);
+    border-radius: 16px;
+    height: 140px;
+    position: relative;
+    overflow: hidden;
+    margin: 16px 0;
+    border: 2px solid rgba(234,88,12,0.3);
+  }
+  .hoop {
+    position: absolute;
+    right: 20px;
+    top: 30%;
+    font-size: 32px;
+  }
+  .bball {
+    position: absolute;
+    font-size: 28px;
+    left: 20%;
+    top: 50%;
+    transform: translateY(-50%);
+    transition: all 0.9s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+  }
+
+  /* JOBS */
+  .job-card {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 14px;
+    margin-bottom: 8px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  .job-card:active { background: rgba(124,58,237,0.1); border-color: var(--accent); }
+  .job-card.selected { border-color: var(--accent2); background: rgba(124,58,237,0.1); }
+  .job-icon { font-size: 28px; }
+  .job-info { flex: 1; }
+  .job-name { font-weight: 600; font-size: 14px; }
+  .job-pay { color: var(--gold); font-size: 13px; margin-top: 2px; }
+  .job-cd { color: var(--muted); font-size: 11px; margin-top: 2px; }
+  .cooldown-bar {
+    height: 4px;
+    background: var(--surface);
+    border-radius: 2px;
+    margin-top: 6px;
+    overflow: hidden;
+  }
+  .cooldown-fill {
+    height: 100%;
+    background: linear-gradient(90deg, var(--accent), var(--accent2));
+    border-radius: 2px;
+    transition: width 1s linear;
+  }
+
+  /* TOP */
+  .top-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px;
+    background: var(--surface2);
+    border-radius: 12px;
+    margin-bottom: 8px;
+    border: 1px solid var(--border);
+  }
+  .top-rank {
+    font-family: 'Unbounded', sans-serif;
+    font-size: 16px;
+    font-weight: 800;
+    width: 36px;
+    text-align: center;
+  }
+  .top-name { flex: 1; font-weight: 500; }
+  .top-bal { font-family: 'Unbounded', sans-serif; font-size: 13px; color: var(--gold); }
+
+  /* TRANSFER */
+  .input-field {
+    width: 100%;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 12px 14px;
+    color: var(--text);
+    font-family: 'Inter', sans-serif;
+    font-size: 14px;
+    outline: none;
+    margin-bottom: 10px;
+  }
+  .input-field:focus { border-color: var(--accent2); }
+  .input-label { font-size: 12px; color: var(--muted); margin-bottom: 6px; }
+
+  /* TOAST */
+  .toast {
+    position: fixed;
+    bottom: 80px;
+    left: 50%;
+    transform: translateX(-50%) translateY(100px);
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 12px 20px;
+    font-size: 13px;
+    font-weight: 500;
+    z-index: 1000;
+    transition: transform 0.3s ease;
+    white-space: nowrap;
+    max-width: 90vw;
+    text-align: center;
+  }
+  .toast.show { transform: translateX(-50%) translateY(0); }
+  .toast.success { border-color: var(--green); color: var(--green); }
+  .toast.error { border-color: var(--red); color: var(--red); }
+
+  /* STATS */
+  .stat-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+    margin-bottom: 12px;
+  }
+  .stat-box {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 14px;
+    text-align: center;
+  }
+  .stat-val { font-family: 'Unbounded', sans-serif; font-size: 20px; font-weight: 800; color: var(--accent2); }
+  .stat-lbl { font-size: 11px; color: var(--muted); margin-top: 4px; }
+
+  /* BUSINESS */
+  .biz-card {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 14px;
+    margin-bottom: 10px;
+  }
+  .biz-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
+  .biz-name { font-weight: 600; font-size: 14px; }
+  .biz-income { color: var(--green); font-size: 12px; font-weight: 600; }
+  .progress-bar { height: 6px; background: var(--surface); border-radius: 3px; overflow: hidden; margin: 6px 0; }
+  .progress-fill { height: 100%; background: linear-gradient(90deg, var(--green), #34d399); border-radius: 3px; }
+
+  .spinning-indicator {
+    display: inline-block;
+    animation: rotate 1s linear infinite;
+  }
+  @keyframes rotate { to { transform: rotate(360deg); } }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="header-top">
+    <div class="logo">🎮 GameBot</div>
+    <div style="font-size:11px;color:rgba(255,255,255,0.6)">v2.0</div>
+  </div>
+  <div class="balance-card">
+    <div class="balance-label">Баланс</div>
+    <div class="balance-amount" id="headerBalance">0</div>
+    <div class="balance-username" id="headerUsername">@user</div>
+  </div>
+</div>
+
+<nav class="nav">
+  <button class="nav-btn active" onclick="showPage('home')">
+    <span class="icon">🏠</span>Главная
+  </button>
+  <button class="nav-btn" onclick="showPage('casino')">
+    <span class="icon">🎰</span>Казино
+  </button>
+  <button class="nav-btn" onclick="showPage('sports')">
+    <span class="icon">⚽</span>Спорт
+  </button>
+  <button class="nav-btn" onclick="showPage('jobs')">
+    <span class="icon">💼</span>Работа
+  </button>
+  <button class="nav-btn" onclick="showPage('business')">
+    <span class="icon">🏢</span>Бизнес
+  </button>
+  <button class="nav-btn" onclick="showPage('transfer')">
+    <span class="icon">💸</span>Перевод
+  </button>
+  <button class="nav-btn" onclick="showPage('top')">
+    <span class="icon">🏆</span>Топ
+  </button>
+</nav>
+
+<!-- HOME -->
+<div class="page active" id="page-home">
+  <div class="card">
+    <div class="card-title">📊 Ваша статистика</div>
+    <div class="stat-grid">
+      <div class="stat-box">
+        <div class="stat-val" id="statBalance">0</div>
+        <div class="stat-lbl">💰 Монет</div>
+      </div>
+      <div class="stat-box">
+        <div class="stat-val" id="statJob">—</div>
+        <div class="stat-lbl">💼 Работа</div>
+      </div>
+    </div>
+    <div class="stat-grid">
+      <div class="stat-box">
+        <div class="stat-val" id="statBiz">0</div>
+        <div class="stat-lbl">🏢 Бизнесов</div>
+      </div>
+      <div class="stat-box">
+        <div class="stat-val" id="statRank">—</div>
+        <div class="stat-lbl">🏆 Место в топе</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">📖 Команды</div>
+    <div style="font-size:13px;line-height:1.8;color:#94a3b8;">
+      <div>⚽ <b style="color:#fff">ф [сумма]</b> — Футбол x2</div>
+      <div>🏀 <b style="color:#fff">б [сумма]</b> — Баскетбол x3</div>
+      <div>💸 <b style="color:#fff">п @user [сумма]</b> — Перевод</div>
+      <div>🧾 <b style="color:#fff">c [сумма] [кол-во]</b> — Создать чек</div>
+      <div>🔐 <b style="color:#fff">/admin</b> → пароль <b style="color:#a855f7">архив</b></div>
+    </div>
+  </div>
+</div>
+
+<!-- CASINO -->
+<div class="page" id="page-casino">
+  <div class="card">
+    <div class="card-title">🎰 Слоты</div>
+    <div class="slots-display">
+      <div class="slot-reel" id="reel1">🍒</div>
+      <div class="slot-reel" id="reel2">🍋</div>
+      <div class="slot-reel" id="reel3">🍊</div>
+    </div>
+    <div class="result-msg" id="slotsResult"></div>
+    <div class="input-label">Ваша ставка</div>
+    <div class="bet-row">
+      <input type="number" class="bet-input" id="slotsBet" placeholder="100" min="1">
+    </div>
+    <div class="bet-presets">
+      <div class="preset-btn" onclick="setBet('slotsBet',100)">100</div>
+      <div class="preset-btn" onclick="setBet('slotsBet',500)">500</div>
+      <div class="preset-btn" onclick="setBet('slotsBet',1000)">1К</div>
+      <div class="preset-btn" onclick="setBet('slotsBet',5000)">5К</div>
+      <div class="preset-btn" onclick="setBet('slotsBet', Math.floor(state.balance/2))">1/2</div>
+    </div>
+    <button class="btn btn-primary" id="spinBtn" onclick="spinSlots()">🎰 Крутить!</button>
+    <div style="margin-top:12px;font-size:11px;color:var(--muted);text-align:center;">
+      3×7️⃣ = x10 &nbsp;|&nbsp; 3 одинаковых = x5 &nbsp;|&nbsp; 2 одинаковых = x2
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">🔢 Угадай число</div>
+    <div style="text-align:center;margin:16px 0;">
+      <div style="font-size:48px;font-family:Unbounded;font-weight:800;color:var(--accent2);" id="guessDisplay">?</div>
+      <div style="font-size:12px;color:var(--muted);margin-top:4px;">Загаданное число 1–10</div>
+    </div>
+    <div class="result-msg" id="guessResult"></div>
+    <div class="input-label">Ставка</div>
+    <input type="number" class="bet-input" id="guessBet" placeholder="100" style="margin-bottom:10px;">
+    <div class="input-label">Ваше число (1-10)</div>
+    <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:6px;margin-bottom:12px;">
+      <script>for(let i=1;i<=10;i++) document.write(`<button class="preset-btn" id="num${i}" onclick="selectNumber(${i})">${i}</button>`);</script>
+    </div>
+    <button class="btn btn-gold" onclick="playGuess()">🔢 Угадать!</button>
+    <div style="margin-top:8px;font-size:11px;color:var(--muted);text-align:center;">Угадал = x3</div>
+  </div>
+</div>
+
+<!-- SPORTS -->
+<div class="page" id="page-sports">
+  <div class="card">
+    <div class="card-title">⚽ Футбол <span style="color:var(--green);font-size:11px;">50% шанс | x2</span></div>
+    <div class="sport-field" id="footballField">
+      <div class="goal-post"></div>
+      <div class="ball" id="football">⚽</div>
+    </div>
+    <div class="result-msg" id="footballResult"></div>
+    <div class="input-label">Ставка</div>
+    <div class="bet-row">
+      <input type="number" class="bet-input" id="footballBet" placeholder="100">
+    </div>
+    <div class="bet-presets">
+      <div class="preset-btn" onclick="setBet('footballBet',100)">100</div>
+      <div class="preset-btn" onclick="setBet('footballBet',500)">500</div>
+      <div class="preset-btn" onclick="setBet('footballBet',1000)">1К</div>
+      <div class="preset-btn" onclick="setBet('footballBet',Math.floor(state.balance/2))">1/2</div>
+    </div>
+    <button class="btn btn-green" onclick="playFootball()">⚽ Бить!</button>
+  </div>
+
+  <div class="card">
+    <div class="card-title">🏀 Баскетбол <span style="color:var(--gold);font-size:11px;">33% шанс | x3</span></div>
+    <div class="basket-court" id="basketCourt">
+      <div class="hoop">🏀🥅</div>
+      <div class="bball" id="basketball">🏀</div>
+    </div>
+    <div class="result-msg" id="basketResult"></div>
+    <div class="input-label">Ставка</div>
+    <div class="bet-row">
+      <input type="number" class="bet-input" id="basketBet" placeholder="100">
+    </div>
+    <div class="bet-presets">
+      <div class="preset-btn" onclick="setBet('basketBet',100)">100</div>
+      <div class="preset-btn" onclick="setBet('basketBet',500)">500</div>
+      <div class="preset-btn" onclick="setBet('basketBet',1000)">1К</div>
+      <div class="preset-btn" onclick="setBet('basketBet',Math.floor(state.balance/2))">1/2</div>
+    </div>
+    <button class="btn btn-gold" onclick="playBasket()">🏀 Бросить!</button>
+  </div>
+</div>
+
+<!-- JOBS -->
+<div class="page" id="page-jobs">
+  <div class="card">
+    <div class="card-title">💼 Выбери работу</div>
+    <div id="jobsList"></div>
+    <button class="btn btn-primary" id="workBtn" onclick="doWork()" style="margin-top:4px;" disabled>⚡ Работать</button>
+    <div class="result-msg" id="workResult" style="margin-top:10px;"></div>
+  </div>
+</div>
+
+<!-- BUSINESS -->
+<div class="page" id="page-business">
+  <div class="card">
+    <div class="card-title">🏢 Мои бизнесы</div>
+    <div id="myBizList"><div style="color:var(--muted);font-size:13px;text-align:center;padding:20px;">Нет бизнесов. Купи ниже!</div></div>
+  </div>
+  <div class="card">
+    <div class="card-title">🛒 Купить бизнес</div>
+    <div id="bizShop"></div>
+  </div>
+</div>
+
+<!-- TRANSFER -->
+<div class="page" id="page-transfer">
+  <div class="card">
+    <div class="card-title">💸 Перевод монет</div>
+    <div class="input-label">Получатель (@username)</div>
+    <input type="text" class="input-field" id="transferTo" placeholder="@username">
+    <div class="input-label">Сумма</div>
+    <input type="number" class="input-field" id="transferAmount" placeholder="100">
+    <button class="btn btn-primary" onclick="doTransfer()">💸 Перевести</button>
+    <div class="result-msg" id="transferResult" style="margin-top:10px;"></div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">🧾 Создать чек</div>
+    <div style="font-size:12px;color:var(--muted);margin-bottom:12px;">С вашего баланса спишется: сумма × активации</div>
+    <div class="input-label">Сумма на 1 активацию</div>
+    <input type="number" class="input-field" id="checkAmount" placeholder="100">
+    <div class="input-label">Количество активаций</div>
+    <input type="number" class="input-field" id="checkUses" placeholder="10">
+    <div id="checkCostPreview" style="font-size:12px;color:var(--gold);margin-bottom:10px;text-align:center;"></div>
+    <button class="btn btn-gold" onclick="createCheck()">🧾 Создать чек</button>
+    <div class="result-msg" id="checkResult" style="margin-top:10px;"></div>
+  </div>
+</div>
+
+<!-- TOP -->
+<div class="page" id="page-top">
+  <div class="card">
+    <div class="card-title">🏆 Топ игроков</div>
+    <div id="topList"><div style="color:var(--muted);text-align:center;padding:20px;">Загрузка...</div></div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const tg = window.Telegram?.WebApp;
+if (tg) {
+  tg.ready();
+  tg.expand();
+  tg.setHeaderColor('#7c3aed');
+}
+
+// State
+const state = {
+  balance: 0,
+  username: '',
+  userId: 0,
+  job: null,
+  lastWork: 0,
+  businesses: [],
+  selectedJob: null,
+  selectedNumber: null,
+};
+
+const JOBS = {
+  taxi:    { name: '🚕 Такси',    pay: 150,  cooldown: 75,  desc: '150 монет за рейс' },
+  courier: { name: '📦 Курьер',   pay: 100,  cooldown: 105, desc: '100 монет за доставку' },
+  fisher:  { name: '🎣 Рыбак',    pay: 300,  cooldown: 115, desc: '300 монет за улов' },
+  guard:   { name: '💂 Охранник', pay: 1000, cooldown: 125, desc: '1000 монет за смену' },
+  miner:   { name: '⛏️ Шахтёр',  pay: 3000, cooldown: 135, desc: '3000 монет за смену' },
+};
+
+const BUSINESSES = {
+  b1: { name: '🏪 Магазин',            price: 50000,  income: 100, maxMat: 1000 },
+  b2: { name: '🏭 Завод',              price: 70000,  income: 200, maxMat: 10000 },
+  b3: { name: '🏨 Отель',              price: 90000,  income: 350, maxMat: 50000 },
+  b4: { name: '🏗️ Стройкомпания',     price: 110000, income: 500, maxMat: 80000 },
+  b5: { name: '🛢️ Нефтяная компания', price: 130000, income: 800, maxMat: 100000 },
+};
+
+const BOT_TOKEN = "8324710143:AAEBDO7d9bjhjqkKSSYkQH1Xr6OPoAv9LdU";
+const API = `https://api.telegram.org/bot${BOT_TOKEN}`;
+
+// Init from Telegram
+function init() {
+  const user = tg?.initDataUnsafe?.user;
+  if (user) {
+    state.userId = user.id;
+    state.username = user.username || user.first_name || 'user';
+    document.getElementById('headerUsername').textContent = '@' + state.username;
+  }
+  loadData();
+}
+
+async function apiCall(method, params = {}) {
+  try {
+    const url = new URL(`${API}/${method}`);
+    Object.keys(params).forEach(k => url.searchParams.append(k, params[k]));
+    const r = await fetch(url);
+    return await r.json();
+  } catch(e) { return null; }
+}
+
+async function loadData() {
+  // Load balance from bot DB via sendMessage trick
+  // In production this connects to your backend
+  // For demo - load from localStorage
+  const saved = localStorage.getItem('gamebot_' + state.userId);
+  if (saved) {
+    const data = JSON.parse(saved);
+    state.balance = data.balance || 1000;
+    state.job = data.job || null;
+    state.lastWork = data.lastWork || 0;
+    state.businesses = data.businesses || [];
+  } else {
+    state.balance = 1000;
+    saveData();
+  }
+  updateUI();
+}
+
+function saveData() {
+  localStorage.setItem('gamebot_' + state.userId, JSON.stringify({
+    balance: state.balance,
+    job: state.job,
+    lastWork: state.lastWork,
+    businesses: state.businesses,
+  }));
+}
+
+function updateUI() {
+  const bal = Math.floor(state.balance).toLocaleString('ru');
+  document.getElementById('headerBalance').textContent = bal;
+  document.getElementById('statBalance').textContent = bal;
+  document.getElementById('statJob').textContent = state.job ? JOBS[state.job]?.name.split(' ')[0] : '—';
+  document.getElementById('statBiz').textContent = state.businesses.length;
+  renderJobs();
+  renderBusiness();
+  renderTop();
+}
+
+// NAV
+function showPage(name) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('page-' + name).classList.add('active');
+  event.currentTarget.classList.add('active');
+  if(name === 'top') renderTop();
+  if(name === 'jobs') renderJobs();
+  if(name === 'business') renderBusiness();
+}
+
+// TOAST
+function showToast(msg, type = '') {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.className = 'toast show ' + type;
+  setTimeout(() => t.classList.remove('show'), 2500);
+}
+
+// BET UTILS
+function setBet(id, val) {
+  document.getElementById(id).value = Math.max(1, Math.floor(val));
+}
+
+function getBet(id) {
+  return parseFloat(document.getElementById(id).value) || 0;
+}
+
+function checkBet(bet) {
+  if (!bet || bet <= 0) { showToast('Введите ставку!', 'error'); return false; }
+  if (bet > state.balance) { showToast('Недостаточно средств!', 'error'); return false; }
+  return true;
+}
+
+// SLOTS
+const SLOT_SYMBOLS = ['🍒','🍋','🍊','🍇','⭐','💎','7️⃣'];
+let spinning = false;
+
+async function spinSlots() {
+  if (spinning) return;
+  const bet = getBet('slotsBet');
+  if (!checkBet(bet)) return;
+
+  spinning = true;
+  document.getElementById('spinBtn').disabled = true;
+  document.getElementById('spinBtn').textContent = '⏳ Крутим...';
+  document.getElementById('slotsResult').className = 'result-msg';
+
+  const reels = ['reel1','reel2','reel3'];
+  reels.forEach(id => {
+    document.getElementById(id).classList.add('spinning');
+    document.getElementById(id).textContent = '🎰';
+  });
+
+  await sleep(1200);
+
+  let s1, s2, s3;
+  const chance777 = 0.01;
+  if (Math.random() < chance777) {
+    s1 = s2 = s3 = '7️⃣';
+  } else {
+    s1 = SLOT_SYMBOLS[Math.floor(Math.random() * SLOT_SYMBOLS.length)];
+    s2 = SLOT_SYMBOLS[Math.floor(Math.random() * SLOT_SYMBOLS.length)];
+    s3 = SLOT_SYMBOLS[Math.floor(Math.random() * SLOT_SYMBOLS.length)];
+    while (s1 === '7️⃣' && s2 === '7️⃣' && s3 === '7️⃣') s3 = SLOT_SYMBOLS[Math.floor(Math.random() * 6)];
+  }
+
+  reels.forEach((id, i) => {
+    const sym = [s1,s2,s3][i];
+    document.getElementById(id).classList.remove('spinning');
+    document.getElementById(id).textContent = sym;
+  });
+
+  let win = 0, msg = '';
+  if (s1 === s2 && s2 === s3 && s1 === '7️⃣') {
+    win = bet * 10; msg = '🎉 ДЖЕКПОТ! 777! × 10';
+    reels.forEach(id => document.getElementById(id).classList.add('win'));
+  } else if (s1 === s2 && s2 === s3) {
+    win = bet * 5; msg = `🎉 Три одинаковых! × 5`;
+    reels.forEach(id => document.getElementById(id).classList.add('win'));
+  } else if (s1 === s2 || s2 === s3 || s1 === s3) {
+    win = bet * 2; msg = `✅ Два одинаковых! × 2`;
+  } else {
+    win = 0; msg = `😢 Проигрыш`;
+  }
+
+  const res = document.getElementById('slotsResult');
+  if (win > 0) {
+    state.balance += win - bet;
+    res.textContent = msg + ` +${Math.floor(win - bet).toLocaleString('ru')} монет`;
+    res.className = 'result-msg win';
+    tg?.HapticFeedback?.notificationOccurred('success');
+  } else {
+    state.balance -= bet;
+    res.textContent = msg + ` -${bet.toLocaleString('ru')} монет`;
+    res.className = 'result-msg lose';
+    tg?.HapticFeedback?.notificationOccurred('error');
+  }
+
+  saveData(); updateUI();
+  setTimeout(() => reels.forEach(id => document.getElementById(id).classList.remove('win')), 600);
+  spinning = false;
+  document.getElementById('spinBtn').disabled = false;
+  document.getElementById('spinBtn').textContent = '🎰 Крутить!';
+}
+
+// GUESS
+let selectedNum = null;
+function selectNumber(n) {
+  selectedNum = n;
+  for(let i=1;i<=10;i++) {
+    document.getElementById('num'+i).style.background = i===n ? 'var(--accent)' : '';
+    document.getElementById('num'+i).style.color = i===n ? 'white' : '';
+    document.getElementById('num'+i).style.borderColor = i===n ? 'var(--accent)' : '';
+  }
+}
+
+function playGuess() {
+  const bet = getBet('guessBet');
+  if (!checkBet(bet)) return;
+  if (!selectedNum) { showToast('Выберите число!', 'error'); return; }
+  const secret = Math.floor(Math.random() * 10) + 1;
+  document.getElementById('guessDisplay').textContent = secret;
+  const res = document.getElementById('guessResult');
+  if (selectedNum === secret) {
+    const win = bet * 3;
+    state.balance += win - bet;
+    res.textContent = `🎉 Правильно! +${Math.floor(win - bet).toLocaleString('ru')} монет`;
+    res.className = 'result-msg win';
+    tg?.HapticFeedback?.notificationOccurred('success');
+  } else {
+    state.balance -= bet;
+    res.textContent = `😢 Неверно! Было ${secret}. -${bet.toLocaleString('ru')} монет`;
+    res.className = 'result-msg lose';
+    tg?.HapticFeedback?.notificationOccurred('error');
+  }
+  saveData(); updateUI();
+  setTimeout(() => { document.getElementById('guessDisplay').textContent = '?'; selectedNum = null; selectNumber(0); }, 2000);
+}
+
+// FOOTBALL
+let footballPlaying = false;
+async function playFootball() {
+  if (footballPlaying) return;
+  const bet = getBet('footballBet');
+  if (!checkBet(bet)) return;
+  footballPlaying = true;
+  document.getElementById('footballResult').className = 'result-msg';
+  const ball = document.getElementById('football');
+  ball.style.left = '20%';
+  ball.style.top = '50%';
+  await sleep(100);
+  const win = Math.random() < 0.5;
+  ball.style.left = win ? '80%' : '60%';
+  ball.style.top = win ? '50%' : '20%';
+  await sleep(900);
+  const res = document.getElementById('footballResult');
+  if (win) {
+    const earned = bet;
+    state.balance += earned;
+    res.textContent = `⚽ ГОЛ! +${earned.toLocaleString('ru')} монет`;
+    res.className = 'result-msg win';
+    tg?.HapticFeedback?.notificationOccurred('success');
+  } else {
+    state.balance -= bet;
+    res.textContent = `😢 Мимо! -${bet.toLocaleString('ru')} монет`;
+    res.className = 'result-msg lose';
+    tg?.HapticFeedback?.notificationOccurred('error');
+  }
+  saveData(); updateUI();
+  await sleep(500);
+  ball.style.left = '20%';
+  ball.style.top = '50%';
+  footballPlaying = false;
+}
+
+// BASKETBALL
+let basketPlaying = false;
+async function playBasket() {
+  if (basketPlaying) return;
+  const bet = getBet('basketBet');
+  if (!checkBet(bet)) return;
+  basketPlaying = true;
+  document.getElementById('basketResult').className = 'result-msg';
+  const ball = document.getElementById('basketball');
+  ball.style.left = '20%';
+  ball.style.top = '50%';
+  await sleep(100);
+  const win = Math.random() < 0.33;
+  ball.style.left = '75%';
+  ball.style.top = win ? '30%' : '10%';
+  await sleep(900);
+  const res = document.getElementById('basketResult');
+  if (win) {
+    const earned = bet * 2;
+    state.balance += earned;
+    res.textContent = `🏀 ПОПАЛ! +${earned.toLocaleString('ru')} монет`;
+    res.className = 'result-msg win';
+    tg?.HapticFeedback?.notificationOccurred('success');
+  } else {
+    state.balance -= bet;
+    res.textContent = `🏀 Промах! -${bet.toLocaleString('ru')} монет`;
+    res.className = 'result-msg lose';
+    tg?.HapticFeedback?.notificationOccurred('error');
+  }
+  saveData(); updateUI();
+  await sleep(500);
+  ball.style.left = '20%';
+  ball.style.top = '50%';
+  basketPlaying = false;
+}
+
+// JOBS
+function renderJobs() {
+  const now = Math.floor(Date.now() / 1000);
+  const diff = now - state.lastWork;
+  const curJob = state.job ? JOBS[state.job] : null;
+  const canWork = !state.job || diff >= curJob?.cooldown;
+
+  let html = '';
+  Object.entries(JOBS).forEach(([key, j]) => {
+    html += `<div class="job-card ${state.job===key?'selected':''}" onclick="selectJob('${key}')">
+      <div class="job-icon">${j.name.split(' ')[0]}</div>
+      <div class="job-info">
+        <div class="job-name">${j.name.split(' ').slice(1).join(' ')}</div>
+        <div class="job-pay">💰 ${j.pay.toLocaleString('ru')} монет</div>
+        <div class="job-cd">⏰ Кулдаун: ${j.cooldown} сек</div>
+      </div>
+    </div>`;
+  });
+  document.getElementById('jobsList').innerHTML = html;
+
+  const btn = document.getElementById('workBtn');
+  if (!state.job) {
+    btn.textContent = '⚡ Выберите работу';
+    btn.disabled = true;
+  } else if (canWork) {
+    btn.textContent = '⚡ Работать';
+    btn.disabled = false;
+    btn.className = 'btn btn-primary';
+  } else {
+    const left = curJob.cooldown - diff;
+    const m = Math.floor(left/60), s = left%60;
+    btn.textContent = `⏰ Ждите ${m>0?m+'м ':''} ${s}с`;
+    btn.disabled = true;
+    btn.className = 'btn btn-surface';
+  }
+}
+
+function selectJob(key) {
+  state.job = key;
+  if(state.lastWork === 0) state.lastWork = 0; // keep cooldown
+  saveData();
+  renderJobs();
+}
+
+function doWork() {
+  if (!state.job) return;
+  const now = Math.floor(Date.now() / 1000);
+  const j = JOBS[state.job];
+  const diff = now - state.lastWork;
+  if (diff < j.cooldown) {
+    showToast('Подождите!', 'error');
+    return;
+  }
+  state.balance += j.pay;
+  state.lastWork = now;
+  saveData(); updateUI();
+  const res = document.getElementById('workResult');
+  res.textContent = `✅ ${j.name} +${j.pay.toLocaleString('ru')} монет! 💰 ${Math.floor(state.balance).toLocaleString('ru')}`;
+  res.className = 'result-msg win';
+  tg?.HapticFeedback?.notificationOccurred('success');
+  setTimeout(renderJobs, 500);
+  // Hide result after cooldown timer
+  setTimeout(() => { res.className = 'result-msg'; }, 3000);
+}
+
+// Cooldown timer
+setInterval(() => {
+  if (document.getElementById('page-jobs').classList.contains('active')) renderJobs();
+}, 1000);
+
+// BUSINESS
+function renderBusiness() {
+  // My businesses
+  let myHtml = '';
+  if (state.businesses.length === 0) {
+    myHtml = '<div style="color:var(--muted);font-size:13px;text-align:center;padding:20px;">Нет бизнесов</div>';
+  } else {
+    state.businesses.forEach((biz, idx) => {
+      const b = BUSINESSES[biz.type];
+      const now = Math.floor(Date.now() / 1000);
+      const mins = (now - biz.lastCollect) / 60;
+      const pending = biz.materials > 0 ? Math.floor(b.income * mins) : 0;
+      const matPct = Math.min(100, (biz.materials / b.maxMat) * 100);
+      myHtml += `<div class="biz-card">
+        <div class="biz-header">
+          <div class="biz-name">${b.name}</div>
+          <div class="biz-income">+${b.income}/мин</div>
+        </div>
+        <div style="font-size:12px;color:var(--muted);">Материалов: ${biz.materials}/${b.maxMat}</div>
+        <div class="progress-bar"><div class="progress-fill" style="width:${matPct}%"></div></div>
+        <div style="font-size:12px;color:var(--gold);margin-bottom:10px;">💰 К получению: ~${pending.toLocaleString('ru')}</div>
+        <div style="display:flex;gap:8px;">
+          <button class="btn btn-green btn-sm" onclick="collectBiz(${idx})" style="flex:1;">💰 Собрать</button>
+          <button class="btn btn-surface btn-sm" onclick="buyMats(${idx})" style="flex:1;">📦 Материалы</button>
+        </div>
+      </div>`;
+    });
+  }
+  document.getElementById('myBizList').innerHTML = myHtml;
+
+  // Shop
+  let shopHtml = '';
+  Object.entries(BUSINESSES).forEach(([key, b]) => {
+    const owned = state.businesses.find(biz => biz.type === key);
+    shopHtml += `<div class="biz-card" style="${owned?'opacity:0.5;':''}">
+      <div class="biz-header">
+        <div class="biz-name">${b.name}</div>
+        <div class="biz-income">+${b.income}/мин</div>
+      </div>
+      <div style="font-size:12px;color:var(--muted);">Цена: ${b.price.toLocaleString('ru')} монет</div>
+      <button class="btn ${owned?'btn-surface':'btn-primary'} btn-sm" style="margin-top:10px;" 
+        onclick="buyBiz('${key}')" ${owned?'disabled':''}>
+        ${owned ? '✅ Куплено' : '🛒 Купить'}
+      </button>
+    </div>`;
+  });
+  document.getElementById('bizShop').innerHTML = shopHtml;
+}
+
+function buyBiz(key) {
+  if (state.businesses.length >= 1) { showToast('Можно иметь только 1 бизнес!', 'error'); return; }
+  const b = BUSINESSES[key];
+  if (state.balance < b.price) { showToast('Недостаточно средств!', 'error'); return; }
+  state.balance -= b.price;
+  state.businesses.push({ type: key, materials: 0, lastCollect: Math.floor(Date.now()/1000) });
+  saveData(); updateUI();
+  showToast(`✅ Куплен ${b.name}!`, 'success');
+}
+
+function collectBiz(idx) {
+  const biz = state.businesses[idx];
+  const b = BUSINESSES[biz.type];
+  const now = Math.floor(Date.now()/1000);
+  const mins = (now - biz.lastCollect) / 60;
+  if (biz.materials <= 0) { showToast('Нужны материалы!', 'error'); return; }
+  const earned = Math.floor(b.income * mins);
+  if (earned <= 0) { showToast('Подождите немного!', 'error'); return; }
+  const used = Math.min(biz.materials, Math.ceil(mins));
+  state.balance += earned;
+  biz.materials = Math.max(0, biz.materials - used);
+  biz.lastCollect = now;
+  saveData(); updateUI();
+  showToast(`💰 Собрано ${earned.toLocaleString('ru')} монет!`, 'success');
+}
+
+function buyMats(idx) {
+  const biz = state.businesses[idx];
+  const b = BUSINESSES[biz.type];
+  const amount = parseInt(prompt('Сколько материалов? (10 монет/шт)') || '0');
+  if (!amount || amount <= 0) return;
+  const cost = amount * 10;
+  if (state.balance < cost) { showToast(`Нужно ${cost.toLocaleString('ru')} монет!`, 'error'); return; }
+  const maxBuy = b.maxMat - biz.materials;
+  const actual = Math.min(amount, maxBuy);
+  state.balance -= actual * 10;
+  biz.materials += actual;
+  saveData(); updateUI();
+  showToast(`✅ Куплено ${actual} материалов`, 'success');
+}
+
+// TRANSFER
+function doTransfer() {
+  const to = document.getElementById('transferTo').value.trim();
+  const amount = parseFloat(document.getElementById('transferAmount').value) || 0;
+  const res = document.getElementById('transferResult');
+  if (!to) { res.textContent = '❌ Введите получателя!'; res.className = 'result-msg lose'; return; }
+  if (!amount || amount <= 0) { res.textContent = '❌ Введите сумму!'; res.className = 'result-msg lose'; return; }
+  if (amount > state.balance) { res.textContent = '❌ Недостаточно средств!'; res.className = 'result-msg lose'; return; }
+  // In real app — send to backend
+  state.balance -= amount;
+  res.textContent = `✅ Отправлено ${amount.toLocaleString('ru')} монет → ${to}`;
+  res.className = 'result-msg win';
+  saveData(); updateUI();
+}
+
+// CHECK COST PREVIEW
+document.getElementById('checkAmount')?.addEventListener('input', updateCheckPreview);
+document.getElementById('checkUses')?.addEventListener('input', updateCheckPreview);
+function updateCheckPreview() {
+  const a = parseFloat(document.getElementById('checkAmount').value) || 0;
+  const u = parseInt(document.getElementById('checkUses').value) || 0;
+  const total = a * u;
+  document.getElementById('checkCostPreview').textContent = total > 0 ? `Спишется: ${total.toLocaleString('ru')} монет` : '';
+}
+
+function createCheck() {
+  const amount = parseFloat(document.getElementById('checkAmount').value) || 0;
+  const uses = parseInt(document.getElementById('checkUses').value) || 0;
+  const res = document.getElementById('checkResult');
+  if (!amount || amount <= 0) { res.textContent = '❌ Введите сумму!'; res.className = 'result-msg lose'; return; }
+  if (!uses || uses <= 0) { res.textContent = '❌ Введите количество!'; res.className = 'result-msg lose'; return; }
+  const total = amount * uses;
+  if (state.balance < total) { res.textContent = `❌ Нужно ${total.toLocaleString('ru')} монет!`; res.className = 'result-msg lose'; return; }
+  state.balance -= total;
+  res.textContent = `✅ Чек создан! Спишено ${total.toLocaleString('ru')} монет. Отправь ссылку: c ${amount} ${uses}`;
+  res.className = 'result-msg win';
+  saveData(); updateUI();
+}
+
+// TOP
+function renderTop() {
+  // Demo top — in real app fetch from backend
+  const topData = [
+    { name: state.username || 'Вы', balance: state.balance },
+  ];
+  // Sort
+  topData.sort((a,b) => b.balance - a.balance);
+  let html = '';
+  topData.forEach((u, i) => {
+    const medals = ['🥇','🥈','🥉'];
+    const rank = medals[i] || `${i+1}.`;
+    html += `<div class="top-item">
+      <div class="top-rank">${rank}</div>
+      <div class="top-name">@${u.name}</div>
+      <div class="top-bal">${Math.floor(u.balance).toLocaleString('ru')}</div>
+    </div>`;
+  });
+  document.getElementById('topList').innerHTML = html || '<div style="color:var(--muted);text-align:center;padding:20px;">Нет данных</div>';
+}
+
+function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
+
+init();
+</script>
+</body>
+</html>
